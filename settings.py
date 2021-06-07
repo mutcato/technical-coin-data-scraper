@@ -4,6 +4,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_REGION_NAME = os.getenv("AWS_REGION_NAME")
+
 # env variables
 # binance test api account: https://testnet.binance.vision/
 BINANCE_KEY = os.getenv("TEST_BINANCE_API_KEY")

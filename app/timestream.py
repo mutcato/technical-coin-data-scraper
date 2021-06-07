@@ -1,15 +1,26 @@
 from decimal import Decimal
 from typing import Dict
 from settings import logging
+import settings
 import boto3
 
-from indicators import Sequence
+from .indicators import Sequence
 
 logger = logging.getLogger()
 
 class Timestream:
-    write_client = boto3.client("timestream-write")
-    query_client = boto3.client("timestream-query")
+    write_client = boto3.client(
+        "timestream-write", 
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID, 
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY, 
+        region_name=settings.AWS_REGION_NAME
+    )
+    query_client = boto3.client(
+        "timestream-query", 
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID, 
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY, 
+        region_name=settings.AWS_REGION_NAME
+    )
 
     insertion_limit = 100 # you can insert this many records per time
 

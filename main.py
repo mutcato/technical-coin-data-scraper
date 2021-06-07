@@ -7,8 +7,8 @@ from binance.client import Client
 from binance.websockets import BinanceSocketManager
 
 import settings
-from exchange import Binance
-from timestream import Timestream
+from app.exchange import Binance
+from app.timestream import Timestream
 
 
 # binance test api account: https://testnet.binance.vision/

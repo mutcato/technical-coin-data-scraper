@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+
+  backend:
+    build: ./
+    restart: always
+    volumes:
+      - ./:/project/
+    ports:
+      - 2323:2323  #localPort:containerPort
+    stdin_open: true
+    tty: true
