@@ -1,0 +1,7 @@
+boto3==1.17.22
+numpy==1.20.1
+pandas==1.2.3
+python-binance==0.7.9
+python-dotenv==0.15.0
+ta==0.7.0
+Twisted==20.3.0
