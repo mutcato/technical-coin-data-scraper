@@ -4,7 +4,7 @@ from settings import logging
 import settings
 import boto3
 
-from .indicators import Sequence
+from .indicators import IndicatorException, Sequence
 
 logger = logging.getLogger()
 
@@ -28,7 +28,7 @@ class Timestream:
         self.database = database
         self.table = table
 
-    def get_last_candles(self, time_period, interval):
+    def get_last_candles(self, ticker, time_period, interval):
         """
         time_period: time period you want candle records are in. str -> 6h
         interval: candle interval. str -> 5m
@@ -40,11 +40,17 @@ class Timestream:
 
         try:
             response = cls.query_client.query(
-                QueryString = f"""SELECT currency, measure_name, measure_value::double, time FROM "{self.database}"."{self.table}" WHERE interval='{interval}' AND time >= ago({time_period}) ORDER BY time ASC"""
+                QueryString = f"""
+                SELECT ticker, measure_name, measure_value::double, time 
+                FROM "{self.database}"."{self.table}" 
+                WHERE measure_name IN ('high', 'low', 'volume', 'close') 
+                AND ticker='{ticker}' 
+                AND interval='{interval}' 
+                AND time >= ago({time_period}) 
+                ORDER BY time ASC"""
             )
-        except self.query_client.exceptions.ValidationException as e:
-            print(f"Warning: ValidationException: {e}")
-            return None
+        except self.query_client.exceptions.ValidationException:
+            raise
         return self.serialize_into_array(response)
     
     @staticmethod
@@ -114,30 +120,36 @@ class Timestream:
         result["measure"]["volume"] = str(params["k"]["v"])
         result["measure"]["number_of_trades"] = str(params["k"]["n"])
         result["time"] = str(params["k"]["t"])[:-3] # opening time
-
         try:
-            last_candles = self.get_last_candles(time_period=self.__number_of_candles_time_period(params), interval=params["k"]["i"])
-            last_candles_coin = Sequence(last_candles[params["s"]])
+            last_candles = self.get_last_candles(ticker=coin+"_"+currency, time_period=self.__number_of_candles_time_period(params), interval=params["k"]["i"])
+            logger.info(last_candles)
+            last_candles_coin = Sequence(last_candles[f"{coin}_{currency}"])
+
             # indicators
             result["measure"]["rsi"] = "{:.2f}".format(last_candles_coin.rsi()[-1])
             result["measure"]["cci"] = "{:.2f}".format(last_candles_coin.cci()[-1])
             result["measure"]["mfi"] = "{:.2f}".format(last_candles_coin.mfi()[-1])
-            result["measure"]["atr"] = "{:.2f}".format(last_candles_coin.atr()[-1])
             result["measure"]["kama"] = "{:.2f}".format(last_candles_coin.kama()[-1])
-            result["measure"]["inverse_fisher_rsi_normalized"] = "{:.2f}".format(last_candles_coin.inverse_fisher_transform(indicator="rsi", normalized=True)[-1])
-            result["measure"]["inverse_fisher_cci_normalized"] = "{:.2f}".format(last_candles_coin.inverse_fisher_transform(indicator="cci", period=8, normalized=True)[-1])
-            result["measure"]["inverse_fisher_mfi_normalized"] = "{:.2f}".format(last_candles_coin.inverse_fisher_transform(indicator="mfi", period=13, normalized=True)[-1])
+            result["measure"]["inv_rsi"] = "{:.2f}".format(last_candles_coin.inverse_fisher_transform(indicator="rsi", normalized=True)[-1])
+            result["measure"]["inv_cci"] = "{:.2f}".format(last_candles_coin.inverse_fisher_transform(indicator="cci", period=8, normalized=True)[-1])
+            result["measure"]["inv_mfi"] = "{:.2f}".format(last_candles_coin.inverse_fisher_transform(indicator="mfi", period=13, normalized=True)[-1])
             macd = last_candles_coin.macd()
             result["measure"]["macd"] = "{:.2f}".format(macd[0][-1])
             result["measure"]["macd_signal"] = "{:.2f}".format(macd[1][-1])
             result["measure"]["macd_diff"] = "{:.2f}".format(macd[2][-1])
             ichimoku = last_candles_coin.ichimoku()
-            result["measure"]["ichimoku_senkou_span_a"] = "{:.2f}".format(ichimoku[0][-1])
-            result["measure"]["ichimoku_senkou_span_b"] = "{:.2f}".format(ichimoku[1][-1])
-            result["measure"]["ichimoku_kijun_sen"] = "{:.2f}".format(ichimoku[2][-1])
-            result["measure"]["ichimoku_tenkan_sen"] = "{:.2f}".format(ichimoku[3][-1])
+            result["measure"]["senkou_span_a"] = "{:.2f}".format(ichimoku[0][-1])
+            result["measure"]["senkou_span_b"] = "{:.2f}".format(ichimoku[1][-1])
+            result["measure"]["kijun_sen"] = "{:.2f}".format(ichimoku[2][-1])
+            result["measure"]["tenkan_sen"] = "{:.2f}".format(ichimoku[3][-1])
+            result["measure"]["atr"] = "{:.2f}".format(last_candles_coin.atr()[-1])
+            logger.info("--------------------------------------------------------------")
+        except IndicatorException as e:
+            logger.warning(f"Warning: Indicator for {coin}_{currency}: {e}")            
+        except self.query_client.exceptions.ValidationException as e:
+            logger.warning(f"Warning: ValidationException: {e}")            
         except Exception as err:
-            logger.error(f"There is no record in database for coin: {params['s']}, time_period: {self.__number_of_candles_time_period(params)}, interval: {params['k']['i']} Increase time interval. KeyError:{err}")
+            logger.error(f"There is no record in database for ticker: {params['s']}, time_period: {self.__number_of_candles_time_period(params)}, interval: {params['k']['i']} Increase time interval. KeyError:{err}")
                 
         records = []
         for measure_key in result["measure"]:
@@ -167,7 +179,6 @@ class Timestream:
                 if response["ResponseMetadata"]["HTTPStatusCode"] != 200:
                     print(f"Error on insertion. Error code: {response['ResponseMetadata']['HTTPStatusCode']}. Error: {response}")
 
-                logger.info(response) # This only prints if insert was succesfull
                 logger.info(records) # This only prints if insert was succesfull
             except cls.write_client.exceptions.RejectedRecordsException as err:
                 logger.error({'exception': err})
