@@ -22,7 +22,7 @@ class Timestream:
         region_name=settings.AWS_REGION_NAME
     )
 
-    insertion_limit = 100 # you can insert this many records per time
+    insertion_limit = 100 # you can insert this many records at once
 
     def __init__(self, database, table):
         self.database = database

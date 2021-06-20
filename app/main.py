@@ -1,15 +1,12 @@
 from functools import partial
-import os
 import requests
-from time import time
 
 from binance.client import Client
 from binance.websockets import BinanceSocketManager
 
 import settings
-from app.exchange import Binance
-from app.timestream import Timestream
-
+from exchange import Binance
+from ticker import Ticker
 
 # binance test api account: https://testnet.binance.vision/
 api_key = settings.BINANCE_KEY
@@ -25,7 +22,7 @@ client.API_URL = "https://testnet.binance.vision/api"
 
 binance = Binance()
 bsm = BinanceSocketManager(client)
-ts = Timestream(database=settings.TIMESTREAM_DATABASE, table=settings.TIMESTREAM_TABLE)
+# ts = Timestream(database=settings.TIMESTREAM_DATABASE, table=settings.TIMESTREAM_TABLE)
 
 def kline_callback(response, coin:str, currency:str, exchange:str):
     if response["e"] == "error":
@@ -33,9 +30,8 @@ def kline_callback(response, coin:str, currency:str, exchange:str):
     if not response["k"]["x"]:
         return None
 
-    records = ts.build_records(response, coin, currency, exchange)
-    if records:
-        ts.insert(records)
+    ticker = Ticker(response, coin, currency, exchange)
+    ticker.insert()
 
     #print(result)
 

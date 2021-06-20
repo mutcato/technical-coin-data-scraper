@@ -1,7 +1,6 @@
 FROM python:3.8
 
 RUN apt-get update
-RUN apt-get install build-essential libssl-dev libffi-dev python3-dev cargo --yes
 RUN pip install --upgrade pip
 
 # install additional dependencies (might have duplicates?)
