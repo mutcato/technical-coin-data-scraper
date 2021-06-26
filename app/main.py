@@ -33,8 +33,6 @@ def kline_callback(response, coin:str, currency:str, exchange:str):
     ticker = Ticker(response, coin, currency, exchange)
     ticker.insert()
 
-    #print(result)
-
 
 binance_result = binance.get_all_tickers(margin=True)
 binance_tickers = binance_result["tickers"]
@@ -42,10 +40,15 @@ exchange = binance_result["exchange"]
 bsm_result = {}
 
 for interval in settings.INTERVALS:
-    for ticker in binance_tickers:
+    for ticker in binance_tickers[:100]:
         ticker_arr = ticker.split("_")
         kline_wrapper = partial(kline_callback, coin=ticker_arr[0], currency=ticker_arr[1], exchange=exchange)
         bsm_result[ticker + "-" + interval] = bsm.start_kline_socket(ticker.replace("_",""), kline_wrapper, interval=interval)
 
 bsm.start()
 
+# print("Starting connection close")
+# for connection in bsm_result.items():
+#     print(connection)
+#     bsm.stop_socket(connection[1]) 
+# print("End connection close")
