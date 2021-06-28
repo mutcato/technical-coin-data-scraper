@@ -6,7 +6,6 @@ from db import sqlite
 from db import timestream
 
 from helpers import convert_interval_to_seconds_int
-from indicators import IndicatorException, Sequence
 
 logger = settings.logging.getLogger()
 
@@ -52,31 +51,6 @@ class Ticker:
         self.measures["low"] = self.response["k"]["l"]
         self.measures["close"] = self.response["k"]["c"]
         self.measures["volume"] = self.response["k"]["c"]
-        try:
-            last_bars = self.get_last_x_bar()
-            sequence = Sequence(last_bars)
-            self.measures["rsi"] = "{:.2f}".format(sequence.rsi()[-1])
-            self.measures["mfi"] = "{:.2f}".format(sequence.mfi()[-1])
-            self.measures["cci"] = "{:.2f}".format(sequence.cci()[-1])
-            self.measures["kama"] = "{:.2f}".format(sequence.kama()[-1])
-            self.measures["inv_rsi"] = "{:.2f}".format(sequence.inverse_fisher_transform(indicator="rsi", normalized=True)[-1])
-            self.measures["inv_cci"] = "{:.2f}".format(sequence.inverse_fisher_transform(indicator="cci", normalized=True)[-1])
-            self.measures["inv_mfi"] = "{:.2f}".format(sequence.inverse_fisher_transform(indicator="mfi", normalized=True)[-1])
-            macd = sequence.macd()
-            self.measures["macd"] = "{:.2f}".format(macd[0][-1])
-            self.measures["macd_signal"] = "{:.2f}".format(macd[1][-1])
-            self.measures["macd_diff"] = "{:.2f}".format(macd[2][-1])
-            ichimoku = sequence.ichimoku()
-            self.measures["senkou_span_a"] = "{:.2f}".format(ichimoku[0][-1])
-            self.measures["senkou_span_b"] = "{:.2f}".format(ichimoku[1][-1])
-            self.measures["kijun_sen"] = "{:.2f}".format(ichimoku[2][-1])
-            self.measures["tenkan_sen"] = "{:.2f}".format(ichimoku[3][-1])
-            self.measures["atr"] = "{:.2f}".format(sequence.atr()[-1])
-        except IndicatorException as e:
-            logger.warning(f"Warning: Indicator for {self.coin}_{self.currency}: {e}")              
-        except Exception as err:
-            logger.error(f"There is no record in database for ticker: {self.coin}_{self.currency}, interval: {self.interval} Increase time interval. KeyError:{err}")
- 
 
     def get_last_x_bar(self, x:int=21):
         connection = sqlite3.connect(settings.SQLITE_DATABASE)
