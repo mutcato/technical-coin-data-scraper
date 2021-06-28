@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+# coding: utf-8
+
 from functools import partial
 import requests
 
@@ -34,7 +37,7 @@ def kline_callback(response, coin:str, currency:str, exchange:str):
     ticker.insert()
 
 
-binance_result = binance.get_all_tickers(margin=True)
+binance_result = binance.get_all_tickers(margin=True, currency="USDT")
 binance_tickers = binance_result["tickers"]
 exchange = binance_result["exchange"]
 bsm_result = {}

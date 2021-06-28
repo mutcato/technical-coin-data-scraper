@@ -14,7 +14,7 @@ BINANCE_KEY = os.getenv("TEST_BINANCE_API_KEY")
 BINANCE_SECRET = os.getenv("TEST_BINANCE_API_SECRET_KEY")
 
 LOG_FORMAT = "%(levelname)s %(filename)s line:%(lineno)d %(asctime)s - %(message)s"
-logging.basicConfig(filename="../logs/log", level=logging.INFO, format=LOG_FORMAT)
+logging.basicConfig(filename="/home/pi/Public/coinmove/technical-coin-data-scraper/logs/log", level=logging.INFO, format=LOG_FORMAT)
 
 TIMESTREAM_DATABASE = "coinmove"
 TIMESTREAM_TABLE = "technical_data"
