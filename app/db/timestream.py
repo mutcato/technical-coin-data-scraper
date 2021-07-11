@@ -56,7 +56,7 @@ class Stream:
         cls = self.__class__
 
         records = self.build_records(ticker=ticker)
-        for records in self.chunks(records, 100):
+        for records in self.chunks(records, self.insertion_limit):
             try:
                 response = cls.write_client.write_records(
                     DatabaseName=self.database,

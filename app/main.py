@@ -42,8 +42,10 @@ binance_tickers = binance_result["tickers"]
 exchange = binance_result["exchange"]
 bsm_result = {}
 
+print(f"length: {len(binance_tickers)}")
+print(binance_tickers)
 for interval in settings.INTERVALS:
-    for ticker in binance_tickers[:100]:
+    for ticker in binance_tickers:
         ticker_arr = ticker.split("_")
         kline_wrapper = partial(kline_callback, coin=ticker_arr[0], currency=ticker_arr[1], exchange=exchange)
         bsm_result[ticker + "-" + interval] = bsm.start_kline_socket(ticker.replace("_",""), kline_wrapper, interval=interval)

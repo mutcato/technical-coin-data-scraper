@@ -50,35 +50,8 @@ class Ticker:
         self.measures["high"] = self.response["k"]["h"]
         self.measures["low"] = self.response["k"]["l"]
         self.measures["close"] = self.response["k"]["c"]
-        self.measures["volume"] = self.response["k"]["c"]
-
-    def get_last_x_bar(self, x:int=21):
-        connection = sqlite3.connect(settings.SQLITE_DATABASE)
-        cursor = connection.cursor()
-        query = f"""SELECT * FROM {settings.SQLITE_TABLE} 
-        WHERE ticker="{self.coin}_{self.currency}" 
-        AND interval="{self.interval}" 
-        AND time > {int(time()) - convert_interval_to_seconds_int(self.interval)*x}
-        ORDER BY time ASC"""
-
-        measures = cursor.execute(query).fetchall()
-        cursor.close()
-
-        result = {}
-        result["close"], result["high"], result["low"], result["volume"], result["time"]  = [], [], [], [], []
-        for measure in measures:
-            if "close" in measure:
-                result["close"].append(measure[4])
-                result["time"].append(measure[5])
-            if "high" in measure:
-                result["high"].append(measure[4])
-            if "low" in measure:
-                result["low"].append(measure[4])
-            if "volume" in measure:
-                result["volume"].append(measure[4])
-
-        print(result)
-        return result
+        self.measures["volume"] = self.response["k"]["v"]
+        self.measures["number_of_trades"] = self.response["k"]["n"]
 
     def insert(self):
         self.build_record()
