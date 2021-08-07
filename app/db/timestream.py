@@ -1,11 +1,10 @@
 from decimal import Decimal
-from typing import Dict
-from settings import logging
+from typing import Dict, List
 import settings
 import boto3
 
 
-logger = logging.getLogger()
+logger = settings.logging.getLogger()
 
 class Stream:
     write_client = boto3.client(
@@ -28,7 +27,7 @@ class Stream:
         self.table = table
     
 
-    def build_records(self, ticker):
+    def build_records(self, ticker)->List:
         result = {}
         # USDT BTC vs currency dinamik olsun
         result = {
