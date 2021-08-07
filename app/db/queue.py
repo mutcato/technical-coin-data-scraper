@@ -2,6 +2,8 @@ from typing import Dict
 import settings
 import boto3
 
+logger = settings.logging.getLogger()
+
 class SQS:
     write_client = boto3.resource(
         "sqs", 
@@ -24,9 +26,12 @@ class SQS:
 
     def insert(self, ticker:Dict, queue_name:str=settings.OHLCV_QUEUE):
         queue = self.write_client.get_queue_by_name(QueueName=queue_name)
-        response = queue.send_message(
-            MessageBody=f"{ticker.coin}_{ticker.currency}_{ticker.interval}", 
-            MessageAttributes=self.create_message_attributes(ticker), 
-            MessageGroupId="test"
-        )
+        try:
+            response = queue.send_message(
+                MessageBody=f"{ticker.coin}_{ticker.currency}_{ticker.interval}", 
+                MessageAttributes=self.create_message_attributes(ticker), 
+                MessageGroupId="test"
+            )
+        except Exception as e:
+            logger.error("SQS error: "+e)
         return response
