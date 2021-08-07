@@ -2,8 +2,7 @@ import sqlite3
 from time import time
 from typing import Dict
 import settings
-from db import sqlite
-from db import timestream
+from db import sqlite, timestream, queue
 
 from helpers import convert_interval_to_seconds_int
 
@@ -55,6 +54,8 @@ class Ticker:
 
     def insert(self):
         self.build_record()
+        sqs = queue.SQS()
+        sqs.insert(ticker=self)
         stream = timestream.Stream(database=settings.TIMESTREAM_DATABASE, table=settings.TIMESTREAM_TABLE)
         stream.insert(ticker=self)
         sqlite_table = sqlite.Table()
