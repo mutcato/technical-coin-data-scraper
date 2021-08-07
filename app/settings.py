@@ -13,8 +13,9 @@ AWS_REGION_NAME = os.getenv("AWS_REGION_NAME")
 BINANCE_KEY = os.getenv("TEST_BINANCE_API_KEY")
 BINANCE_SECRET = os.getenv("TEST_BINANCE_API_SECRET_KEY")
 
+log_file_path = os.path.abspath(os.path.join(".", os.pardir)) + "/logs/log"
 LOG_FORMAT = "%(levelname)s %(filename)s line:%(lineno)d %(asctime)s - %(message)s"
-logging.basicConfig(filename="/home/pi/Public/coinmove/technical-coin-data-scraper/logs/log", level=logging.INFO, format=LOG_FORMAT)
+logging.basicConfig(filename=log_file_path, level=logging.INFO, format=LOG_FORMAT)
 
 TIMESTREAM_DATABASE = "coinmove"
 TIMESTREAM_TABLE = "technical_data"
@@ -25,3 +26,4 @@ SQLITE_TABLE = "technical_data"
 
 INTERVALS = ["5m", "1h", "4h", "12h", "1d"]
 
+OHLCV_QUEUE = "ticker-ohlcv.fifo"
