@@ -148,16 +148,15 @@ class Mertics:
         })
         return "Item" in response
 
-    def append_item_list(self, item, attribute1, attribute2):
+    def append_item_list(self, item, attribute1):
         result = self.table.update_item(
             Key={
                 'ticker': item.partition_key,
                 'interval_metric': item.sort_key
             },
-            UpdateExpression=f"SET {attribute1} = list_append({attribute1}, :i), {attribute2} = list_append({attribute2}, :j)",
+            UpdateExpression=f"SET {attribute1} = list_append({attribute1}, :i)",
             ExpressionAttributeValues={
-                ':i': [round(Decimal(item.metric_value),2)],
-                ':j': [round(Decimal(item.timestamp),2)],
+                ':i': [{str(item.timestamp): round(Decimal(item.metric_value),4)}],
             },
             ReturnValues="UPDATED_NEW"
         )
@@ -169,8 +168,7 @@ class Mertics:
             Item={
                 'ticker': item.partition_key,
                 'interval_metric': item.sort_key,
-                'metric_values': [round(Decimal(item.metric_value),4)],
-                'timestamps': [round(Decimal(item.timestamp),4)],
+                'metric_values': [{str(item.timestamp): round(Decimal(item.metric_value),4)}],
             }
         )
         return response
@@ -185,7 +183,6 @@ class Mertics:
 
         return response
 
-        
 
 class Item:
     def __init__(self, event, metric:str="close"):
