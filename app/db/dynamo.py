@@ -1,13 +1,15 @@
 import boto3
+import botocore
 from decimal import Decimal
 import settings
 
+#event are SQS messages
 event = {
     "Records":[
         {
             "messageId":"f76eab5f-b946-42e4-ac28-759ec8f6b1fb",
             "receiptHandle":"AQEBCJDWEAtDCl6gcsa7Z8TLN7PNnfiHiXljLrY6jzA6iFTbOX7Iy13TDo6y6MRP4voPF6JrgH3i3+VfHaXeww5u5rmhMW6Ez3Yo8UxgflBGkxjj288Hi9fEe4wFt9/N0RrI2iKASlYKpe2Fn2+xgKoZg/VpWRXeTFWI/vBJZ+k2LxbLCuHOV0/IUZdYW14NESzxZ7dYMVLzJeHFpdYzt+UkDEdf/q6vjEcb4/qi0EU9mxMCFxBY2EaqXaQ/ATBoAIVCgfsgUkNTq8w18m1Kh6IgTg==",
-            "body":"SOL_USDT_5m",
+            "body":"DOT_USDT_5m",
             "attributes":{
                 "ApproximateReceiveCount":"1",
                 "SentTimestamp":"1628791206352",
@@ -79,7 +81,7 @@ event = {
                 "dataType":"String"
                 },
                 "time":{
-                "stringValue":"162872399",
+                "stringValue":"162872699",
                 "stringListValues":[
                     
                 ],
@@ -89,7 +91,7 @@ event = {
                 "dataType":"String"
                 },
                 "close":{
-                "stringValue":"383.15000000",
+                "stringValue":"384.15000000",
                 "stringListValues":[
                     
                 ],
@@ -128,15 +130,16 @@ event = {
     ]
 }
 
-class Table:
-    def __init__(self, table_name:str):
+class Mertics:
+    def __init__(self):
         resource = boto3.resource(
             "dynamodb", 
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID, 
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY, 
             region_name=settings.AWS_REGION_NAME
         )
-        self.table = resource.Table(table_name)
+        self.table_name = "metrics"
+        self.table = resource.Table(self.table_name)
         
     def has_item(self, item)->bool:
         response = self.table.get_item(Key={
@@ -199,7 +202,26 @@ class Item:
         return ticker, sort_key
 
 
-table = Table("metrics")
-item = Item(event)
-import pdb
-pdb.set_trace()
+class Summary:
+    def __init__(self):
+        self.table_name = "metrics_summary"
+        resource = boto3.resource("dynamodb")
+        self.table = resource.Table(self.table_name)
+
+    def insert(self, ticker, interval_metric):
+        try:
+            self.table.put_item(
+                Item={"ticker": ticker, "interval_metric": interval_metric},
+                ConditionExpression="attribute_not_exists(ticker) AND attribute_not_exists(interval_metric)"
+            )
+        except botocore.exceptions.ClientError as e:
+            # Ignore the ConditionalCheckFailedException, bubble up
+            # other exceptions.
+            if e.response['Error']['Code'] != 'ConditionalCheckFailedException':
+                raise
+
+
+# table = Metrics()
+# item = Item(event)
+# import pdb
+# pdb.set_trace()
