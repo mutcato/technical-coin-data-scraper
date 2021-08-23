@@ -1,5 +1,6 @@
 import boto3
 import botocore
+from botocore.config import Config
 from decimal import Decimal
 import settings
 
@@ -136,7 +137,8 @@ class Mertics:
             "dynamodb", 
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID, 
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY, 
-            region_name=settings.AWS_REGION_NAME
+            region_name=settings.AWS_REGION_NAME,
+            config=Config(read_timeout=585, connect_timeout=585)
         )
         self.table_name = "metrics"
         self.table = resource.Table(self.table_name)
@@ -202,7 +204,7 @@ class Item:
 class Summary:
     def __init__(self):
         self.table_name = "metrics_summary"
-        resource = boto3.resource("dynamodb")
+        resource = boto3.resource("dynamodb", config=Config(read_timeout=585, connect_timeout=585))
         self.table = resource.Table(self.table_name)
 
     def insert(self, ticker, interval_metric):

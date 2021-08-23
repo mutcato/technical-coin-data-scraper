@@ -1,4 +1,3 @@
-from decimal import Decimal
 from typing import Dict, List
 import settings
 import boto3
