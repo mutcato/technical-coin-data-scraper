@@ -24,6 +24,6 @@ TIMESTREAM_TEST_TABLE = "price"
 SQLITE_DATABASE = "../coinmove.db"
 SQLITE_TABLE = "technical_data"
 
-INTERVALS = ["5m", "1h", "4h", "12h", "1d"]
+INTERVALS = ["5m", "1h", "4h"]
 
 OHLCV_QUEUE = "ticker-ohlcv.fifo"

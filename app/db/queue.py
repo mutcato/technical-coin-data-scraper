@@ -1,6 +1,8 @@
 from typing import Dict
 import settings
 import boto3
+from botocore.config import Config
+import uuid
 
 logger = settings.logging.getLogger()
 
@@ -9,7 +11,8 @@ class SQS:
         "sqs", 
         aws_access_key_id=settings.AWS_ACCESS_KEY_ID, 
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY, 
-        region_name=settings.AWS_REGION_NAME
+        region_name=settings.AWS_REGION_NAME,
+        config=Config(read_timeout=585, connect_timeout=585)
     )
 
     def create_message_attributes(self, ticker)->Dict:
@@ -30,7 +33,8 @@ class SQS:
             response = queue.send_message(
                 MessageBody=f"{ticker.coin}_{ticker.currency}_{ticker.interval}", 
                 MessageAttributes=self.create_message_attributes(ticker), 
-                MessageGroupId="test"
+                MessageGroupId="test",
+                MessageDeduplicationId=str(uuid.uuid1())
             )
         except Exception as e:
             logger.error("SQS error: "+e)
