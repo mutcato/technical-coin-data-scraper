@@ -1,8 +1,8 @@
+from datetime import datetime
 import boto3
 import botocore
 from botocore.config import Config
 from decimal import Decimal
-import settings
 
 #event are SQS messages
 event = {
@@ -82,7 +82,7 @@ event = {
                 "dataType":"String"
                 },
                 "time":{
-                "stringValue":"162872699",
+                "stringValue":"1630528199",
                 "stringListValues":[
                     
                 ],
@@ -131,86 +131,57 @@ event = {
     ]
 }
 
-class Mertics:
+TTL = {"5m": 120*24*60*60, "15m": 120*24*60*60*3, "1h": 120*24*60*60*12, "4h": 120*24*60*60*12*4, "8h": 120*24*60*60*12*8, "1d": 120*24*60*60*12*24}
+
+class Metrics:
     def __init__(self):
         resource = boto3.resource(
             "dynamodb", 
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID, 
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY, 
-            region_name=settings.AWS_REGION_NAME,
             config=Config(read_timeout=585, connect_timeout=585)
         )
         self.table_name = "metrics"
         self.table = resource.Table(self.table_name)
-        
-    def has_item(self, item)->bool:
-        response = self.table.get_item(Key={
-          "ticker": item.partition_key,
-          "interval_metric": item.sort_key
-        })
-        return "Item" in response
 
-    def append_item_list(self, item, attribute1):
-        result = self.table.update_item(
-            Key={
-                'ticker': item.partition_key,
-                'interval_metric': item.sort_key
-            },
-            UpdateExpression=f"SET {attribute1} = list_append({attribute1}, :i)",
-            ExpressionAttributeValues={
-                ':i': [{str(item.timestamp): round(Decimal(item.metric_value),4)}],
-            },
-            ReturnValues="UPDATED_NEW"
-        )
-        if result['ResponseMetadata']['HTTPStatusCode'] == 200 and 'Attributes' in result:
-            return result['Attributes']
-
-    def insert_item(self, item):
+    def insert(self, event):
+        timestamp = int(event["Records"][0]["messageAttributes"]["time"]["stringValue"])
         response = self.table.put_item(
             Item={
-                'ticker': item.partition_key,
-                'interval_metric': item.sort_key,
-                'metric_values': [{str(item.timestamp): round(Decimal(item.metric_value),4)}],
+                'ticker_interval': event["Records"][0]["body"],
+                'time': datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S'),
+                'open': Decimal(event["Records"][0]["messageAttributes"]["open"]["stringValue"]),
+                'high': Decimal(event["Records"][0]["messageAttributes"]["high"]["stringValue"]),
+                'low': Decimal(event["Records"][0]["messageAttributes"]["low"]["stringValue"]),
+                'close': Decimal(event["Records"][0]["messageAttributes"]["close"]["stringValue"]),
+                'volume': Decimal(event["Records"][0]["messageAttributes"]["volume"]["stringValue"]),
+                'number_of_trades': int(event["Records"][0]["messageAttributes"]["number_of_trades"]["stringValue"]),
+                'TTL': timestamp + TTL[event["Records"][0]["messageAttributes"]["interval"]["stringValue"]]
             }
         )
         return response
 
-    def process_item(self, item):
-        if self.has_item(item):
-            print("UPDATE")
-            response = self.append_item_list(item, "metric_values", "timestamps")
-        else:
-            print("INSERT")
-            response = self.insert_item(item)
-
-        return response
-
-
-class Item:
-    def __init__(self, event, metric:str="close"):
-        self.event = event
-        self.metric_name = metric
-        self.partition_key, self.sort_key = self.get_partition_key(metric)
-        self.metric_value = event["Records"][0]["messageAttributes"][metric]["stringValue"]
-        self.timestamp = event["Records"][0]["messageAttributes"]["time"]["stringValue"]
-        
-    def get_partition_key(self, metric:str):
-        message_body = self.event["Records"][0]["body"]
-        ticker, interval = message_body.rsplit("_", 1)
-        sort_key = interval + "_" + metric
-        return ticker, sort_key
 
 
 class Summary:
-    def __init__(self):
+    def __init__(self, event):
         self.table_name = "metrics_summary"
         resource = boto3.resource("dynamodb", config=Config(read_timeout=585, connect_timeout=585))
         self.table = resource.Table(self.table_name)
+        self.event = event
+        self.ticker, self.interval_metric = self.get_ticker_interval()
 
-    def insert(self, ticker, interval_metric):
+    def get_ticker_interval(self):
+        message_body = self.event["Records"][0]["body"]
+        ticker, interval = message_body.rsplit("_", 1)
+        """
+        Todo: Add a loop to insert other metric types (open, high, low, volume, number_of_trades)
+        """
+        interval_metric = interval + "_" + "close"
+        return ticker, interval_metric
+
+    def insert(self):
         try:
             self.table.put_item(
-                Item={"ticker": ticker, "interval_metric": interval_metric},
+                Item={"ticker": self.ticker, "interval_metric": self.interval_metric},
                 ConditionExpression="attribute_not_exists(ticker) AND attribute_not_exists(interval_metric)"
             )
         except botocore.exceptions.ClientError as e:
@@ -219,6 +190,11 @@ class Summary:
             if e.response['Error']['Code'] != 'ConditionalCheckFailedException':
                 raise
 
+def lambda_handler(event, context):
+    metrics = Metrics()
+    summary = Summary(event)
+    metrics.insert(event)
+    summary.insert()
 
 # table = Metrics()
 # item = Item(event)
