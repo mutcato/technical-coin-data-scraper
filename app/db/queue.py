@@ -7,7 +7,7 @@ import uuid
 logger = settings.logging.getLogger()
 
 class SQS:
-    write_client = boto3.resource(
+    client = boto3.client(
         "sqs", 
         aws_access_key_id=settings.AWS_ACCESS_KEY_ID, 
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY, 
@@ -28,14 +28,14 @@ class SQS:
         return attributes
 
     def insert(self, ticker:Dict, queue_name:str=settings.OHLCV_QUEUE):
-        queue = self.write_client.get_queue_by_name(QueueName=queue_name)
+        queue_url = self.client.get_queue_url(QueueName=queue_name)["QueueUrl"]
         try:
-            response = queue.send_message(
+            response = self.client.send_message(
+                QueueUrl=queue_url,
                 MessageBody=f"{ticker.coin}_{ticker.currency}_{ticker.interval}", 
-                MessageAttributes=self.create_message_attributes(ticker), 
-                MessageGroupId="test",
-                MessageDeduplicationId=str(uuid.uuid1())
+                MessageAttributes=self.create_message_attributes(ticker) 
             )
+            logger.info(f"SQS response INFO: {response}")
         except Exception as e:
-            logger.error("SQS error: "+e)
+            logger.error(f"SQS error: {e}")
         return response

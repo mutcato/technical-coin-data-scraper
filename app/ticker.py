@@ -58,5 +58,5 @@ class Ticker:
         sqs.insert(ticker=self)
         stream = timestream.Stream(database=settings.TIMESTREAM_DATABASE, table=settings.TIMESTREAM_TABLE)
         stream.insert(ticker=self)
-        sqlite_table = sqlite.Table()
-        sqlite_table.insert(ticker=self)
+        # sqlite_table = sqlite.Table()
+        # sqlite_table.insert(ticker=self)

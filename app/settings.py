@@ -26,4 +26,4 @@ SQLITE_TABLE = "technical_data"
 
 INTERVALS = ["5m", "1h", "4h"]
 
-OHLCV_QUEUE = "ticker-ohlcv.fifo"
+OHLCV_QUEUE = "ticker-ohlcv"
