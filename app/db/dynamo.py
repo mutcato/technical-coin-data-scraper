@@ -108,7 +108,7 @@ TTL = {
 
 
 class Metrics:
-    def __init__(self, table_name: str = settings.DYNAMO_TABLE_TEST):
+    def __init__(self, table_name: str = settings.DYNAMO_TABLE):
         resource = boto3.resource(
             "dynamodb", config=Config(read_timeout=585, connect_timeout=585)
         )
@@ -122,7 +122,14 @@ class Metrics:
     def batch_insert(self, tickers: list):
         with self.table.batch_writer() as batch:
             for i, ticker in enumerate(tickers):
-                batch.put_item(Item=ticker.convert_to_dynamo_item())
+                item = ticker.convert_to_dynamo_item()
+                try:
+                    batch.put_item(Item=item)
+                    logger.info(f"BATCH INSERTED INTO DYNAMO: {item}")
+                except Exception as e:
+                    logger.error(f"BATCH NOT INSERTED: {item}")
+
+
 
 
 class Summary:
