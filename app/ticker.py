@@ -5,7 +5,6 @@ from typing import Dict, List
 import settings
 from db import dynamo
 
-from helpers import convert_interval_to_seconds_int
 
 logger = settings.logging.getLogger()
 
