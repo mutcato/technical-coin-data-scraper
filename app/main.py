@@ -38,7 +38,6 @@ def kline_callback(response, coin: str, currency: str, exchange: str):
     if batch.length > 20:
         batch.insert_dynamo()
         batch.empty()
-        print("END OF 100")
 
 
 batch = Batch()

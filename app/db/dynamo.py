@@ -123,8 +123,6 @@ class Metrics:
         with self.table.batch_writer() as batch:
             for i, ticker in enumerate(tickers):
                 batch.put_item(Item=ticker.convert_to_dynamo_item())
-                print(i)
-            print(f"END OF BATCH: {ticker}")
 
 
 class Summary:
