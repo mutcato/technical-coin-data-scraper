@@ -18,11 +18,13 @@ LOG_FORMAT = "%(levelname)s %(filename)s line:%(lineno)d %(asctime)s - %(message
 logging.basicConfig(filename=log_file_path, level=logging.INFO, format=LOG_FORMAT)
 
 TIMESTREAM_DATABASE = "coinmove"
+TIMESTREAM_DATABASE_TEST = "coinmove_test"
 TIMESTREAM_TABLE = "technical_data"
-TIMESTREAM_TEST_TABLE = "price"
+TIMESTREAM_TABLE_TEST = "technical_data_test"
 
-SQLITE_DATABASE = "../coinmove.db"
-SQLITE_TABLE = "technical_data"
+DYNAMO_TABLE = "metrics"
+DYNAMO_TABLE_TEST = "metrics_test"
+DYNAMO_SUMMARY_TABLE = "metrics_summary"
 
 INTERVALS = ["5m", "1h", "4h"]
 
