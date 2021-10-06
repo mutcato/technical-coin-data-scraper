@@ -1,14 +1,17 @@
-import sqlite3
+from datetime import datetime
+from decimal import Decimal
 from time import time
-from typing import Dict
+from typing import Dict, List
 import settings
-from db import sqlite, timestream, queue
+from db import dynamo
 
 from helpers import convert_interval_to_seconds_int
 
 logger = settings.logging.getLogger()
 
 class Ticker:
+    TTL = {"5m": 120*24*60*60, "15m": 120*24*60*60*3, "1h": 120*24*60*60*12, "4h": 120*24*60*60*12*4, "8h": 120*24*60*60*12*8, "1d": 120*24*60*60*12*24}
+
     def __init__(self, kline_response:Dict, coin, currency, exchange):
         """
         kline_response = {
@@ -44,6 +47,9 @@ class Ticker:
         self.response = kline_response
         self.measures = {}
 
+    def __str__(self):
+        return self.coin + "_" + self.currency
+
     def build_record(self):
         self.measures["open"] = self.response["k"]["o"]
         self.measures["high"] = self.response["k"]["h"]
@@ -52,11 +58,37 @@ class Ticker:
         self.measures["volume"] = self.response["k"]["v"]
         self.measures["number_of_trades"] = self.response["k"]["n"]
 
-    def insert(self):
+    def convert_to_dynamo_item(self)->dict:
         self.build_record()
-        sqs = queue.SQS()
-        sqs.insert(ticker=self)
-        stream = timestream.Stream(database=settings.TIMESTREAM_DATABASE, table=settings.TIMESTREAM_TABLE)
-        stream.insert(ticker=self)
-        # sqlite_table = sqlite.Table()
-        # sqlite_table.insert(ticker=self)
+        item = {
+            'ticker_interval': f"{self.coin}_{self.currency}_{self.interval}",
+            'time': datetime.utcfromtimestamp(self.time).strftime('%Y-%m-%d %H:%M:%S'),
+            'open': Decimal(str(self.measures["open"])),
+            'high': Decimal(str(self.measures["high"])),
+            'low': Decimal(str(self.measures["low"])),
+            'close': Decimal(str(self.measures["close"])),
+            'volume': Decimal(str(self.measures["volume"])),
+            'number_of_trades': int(self.measures["number_of_trades"]),
+            'TTL': self.time + self.TTL[self.interval]
+        }
+        return item
+
+
+class Batch:
+    def __init__(self):
+        self.objects:List(Ticker) = []
+
+    @property
+    def length(self):
+        return len(self.objects)
+
+    def add(self, ticker: Ticker):
+        self.objects.append(ticker)
+
+    def empty(self):
+        del self.objects[:]
+
+    def insert_dynamo(self):
+        metrics = dynamo.Metrics()
+        metrics.batch_insert(self.objects)
+

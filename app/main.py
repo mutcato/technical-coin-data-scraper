@@ -9,7 +9,7 @@ from binance.websockets import BinanceSocketManager
 
 import settings
 from exchange import Binance
-from ticker import Ticker
+from ticker import Batch, Ticker
 
 # binance test api account: https://testnet.binance.vision/
 api_key = settings.BINANCE_KEY
@@ -25,7 +25,6 @@ client.API_URL = "https://testnet.binance.vision/api"
 
 binance = Binance()
 bsm = BinanceSocketManager(client)
-# ts = Timestream(database=settings.TIMESTREAM_DATABASE, table=settings.TIMESTREAM_TABLE)
 
 def kline_callback(response, coin:str, currency:str, exchange:str):
     if response["e"] == "error":
@@ -34,9 +33,13 @@ def kline_callback(response, coin:str, currency:str, exchange:str):
         return None
 
     ticker = Ticker(response, coin, currency, exchange)
-    ticker.insert()
+    batch.add(ticker)
+    if batch.length > 20:
+        batch.insert_dynamo()
+        batch.empty()
+        print("END OF 100")
 
-
+batch = Batch()
 binance_result = binance.get_all_tickers(margin=False, currency="USDT")
 binance_tickers = binance_result["tickers"]
 exchange = binance_result["exchange"]
