@@ -8,10 +8,18 @@ from db import dynamo
 
 logger = settings.logging.getLogger()
 
-class Ticker:
-    TTL = {"5m": 120*24*60*60, "15m": 120*24*60*60*3, "1h": 120*24*60*60*12, "4h": 120*24*60*60*12*4, "8h": 120*24*60*60*12*8, "1d": 120*24*60*60*12*24}
 
-    def __init__(self, kline_response:Dict, coin, currency, exchange):
+class Ticker:
+    TTL = {
+        "5m": 120 * 24 * 60 * 60,
+        "15m": 120 * 24 * 60 * 60 * 3,
+        "1h": 120 * 24 * 60 * 60 * 12,
+        "4h": 120 * 24 * 60 * 60 * 12 * 4,
+        "8h": 120 * 24 * 60 * 60 * 12 * 8,
+        "1d": 120 * 24 * 60 * 60 * 12 * 24,
+    }
+
+    def __init__(self, kline_response: Dict, coin, currency, exchange):
         """
         kline_response = {
                 "e": "kline",                           # event type
@@ -57,25 +65,25 @@ class Ticker:
         self.measures["volume"] = self.response["k"]["v"]
         self.measures["number_of_trades"] = self.response["k"]["n"]
 
-    def convert_to_dynamo_item(self)->dict:
+    def convert_to_dynamo_item(self) -> dict:
         self.build_record()
         item = {
-            'ticker_interval': f"{self.coin}_{self.currency}_{self.interval}",
-            'time': datetime.utcfromtimestamp(self.time).strftime('%Y-%m-%d %H:%M:%S'),
-            'open': Decimal(str(self.measures["open"])),
-            'high': Decimal(str(self.measures["high"])),
-            'low': Decimal(str(self.measures["low"])),
-            'close': Decimal(str(self.measures["close"])),
-            'volume': Decimal(str(self.measures["volume"])),
-            'number_of_trades': int(self.measures["number_of_trades"]),
-            'TTL': self.time + self.TTL[self.interval]
+            "ticker_interval": f"{self.coin}_{self.currency}_{self.interval}",
+            "time": datetime.utcfromtimestamp(self.time).strftime("%Y-%m-%d %H:%M:%S"),
+            "open": Decimal(str(self.measures["open"])),
+            "high": Decimal(str(self.measures["high"])),
+            "low": Decimal(str(self.measures["low"])),
+            "close": Decimal(str(self.measures["close"])),
+            "volume": Decimal(str(self.measures["volume"])),
+            "number_of_trades": int(self.measures["number_of_trades"]),
+            "TTL": self.time + self.TTL[self.interval],
         }
         return item
 
 
 class Batch:
     def __init__(self):
-        self.objects:List(Ticker) = []
+        self.objects: List(Ticker) = []
 
     @property
     def length(self):
@@ -90,4 +98,3 @@ class Batch:
     def insert_dynamo(self):
         metrics = dynamo.Metrics()
         metrics.batch_insert(self.objects)
-

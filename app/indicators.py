@@ -1,4 +1,3 @@
-
 import logging
 import numpy as np
 import pandas as pd
@@ -7,8 +6,10 @@ import ta
 
 logger = logging.getLogger()
 
+
 class IndicatorException(Exception):
     pass
+
 
 class Sequence:
     def __init__(self, sequence):
@@ -29,11 +30,13 @@ class Sequence:
         105  61238.44  61400.00   65.96  439.718629  61295.27  61198.84            6331.0  177.03
         """
         self.sequence = sequence
-        self.fill_empty_cells() 
+        self.fill_empty_cells()
         try:
             self.candle_data = pd.DataFrame(self.sequence)
         except ValueError as err:
-            logger.error(f"Message: {err}. Look at the list lengths --> {self.sequence}")
+            logger.error(
+                f"Message: {err}. Look at the list lengths --> {self.sequence}"
+            )
 
     def fill_empty_cells(self):
         """
@@ -43,7 +46,9 @@ class Sequence:
         """
         for key in self.sequence:
             if len(self.sequence[key]) < self.longest_array_size:
-                self.sequence[key] = [0] * (self.longest_array_size - len(self.sequence[key])) + self.sequence[key]
+                self.sequence[key] = [0] * (
+                    self.longest_array_size - len(self.sequence[key])
+                ) + self.sequence[key]
 
     @property
     def longest_array_size(self):
@@ -54,10 +59,14 @@ class Sequence:
         period: how many bar will you get, int
         """
         try:
-            result = ta.momentum.RSIIndicator(self.candle_data["close"], window=period, fillna=True)
+            result = ta.momentum.RSIIndicator(
+                self.candle_data["close"], window=period, fillna=True
+            )
             return result.rsi().tolist()
         except:
-            raise IndicatorException(f"""rsi. Close values:{self.candle_data["close"]}""")
+            raise IndicatorException(
+                f"""rsi. Close values:{self.candle_data["close"]}"""
+            )
 
     def cci(self, period=20):
         """
@@ -65,34 +74,63 @@ class Sequence:
         period: how many bar will you get, int
         """
         try:
-            result = ta.trend.CCIIndicator(self.candle_data["high"], self.candle_data["low"], self.candle_data["close"], window=period, fillna=True)
+            result = ta.trend.CCIIndicator(
+                self.candle_data["high"],
+                self.candle_data["low"],
+                self.candle_data["close"],
+                window=period,
+                fillna=True,
+            )
             return result.cci().tolist()
         except:
-            raise IndicatorException(f"""cci. Candle data: {self.candle_data.to_dict()}""")
+            raise IndicatorException(
+                f"""cci. Candle data: {self.candle_data.to_dict()}"""
+            )
 
     def mfi(self, period=14):
         try:
-            result = ta.volume.MFIIndicator(self.candle_data["high"], self.candle_data["low"], self.candle_data["close"], self.candle_data["volume"], window=period, fillna=True)
+            result = ta.volume.MFIIndicator(
+                self.candle_data["high"],
+                self.candle_data["low"],
+                self.candle_data["close"],
+                self.candle_data["volume"],
+                window=period,
+                fillna=True,
+            )
             return result.money_flow_index().tolist()
         except:
-            raise IndicatorException(f"""mfi. Candle data:{self.candle_data.to_dict()}""")
+            raise IndicatorException(
+                f"""mfi. Candle data:{self.candle_data.to_dict()}"""
+            )
 
     def atr(self, period=14):
         try:
-            result = ta.volatility.AverageTrueRange(self.candle_data["high"], self.candle_data["low"], self.candle_data["close"], window=period, fillna=True)
+            result = ta.volatility.AverageTrueRange(
+                self.candle_data["high"],
+                self.candle_data["low"],
+                self.candle_data["close"],
+                window=period,
+                fillna=True,
+            )
             return result.average_true_range().tolist()
         except:
-            raise IndicatorException(f"""atr. Candle data: {self.candle_data.to_dict()}""")
+            raise IndicatorException(
+                f"""atr. Candle data: {self.candle_data.to_dict()}"""
+            )
 
     def kama(self, period=14):
         """
         Kaufman's Adaptive moving Average
         """
         try:
-            result = ta.momentum.KAMAIndicator(self.candle_data["close"], window=period, fillna=True)
+            result = ta.momentum.KAMAIndicator(
+                self.candle_data["close"], window=period, fillna=True
+            )
             return result.kama().tolist()
         except:
-            raise IndicatorException(f"""kama. Close values:{self.candle_data["close"]}""")
+            raise IndicatorException(
+                f"""kama. Close values:{self.candle_data["close"]}"""
+            )
 
     def macd(self):
         try:
@@ -102,12 +140,16 @@ class Sequence:
             macd_diff = result.macd_diff().tolist()
             return macd, macd_signal, macd_diff
         except:
-            raise IndicatorException(f"""macd. Close values:{self.candle_data["close"]}""")
+            raise IndicatorException(
+                f"""macd. Close values:{self.candle_data["close"]}"""
+            )
 
     def ichimoku(self):
         # https://technical-analysis-library-in-python.readthedocs.io/en/latest/ta.html?highlight=ichimoku#ta.trend.IchimokuIndicator
         try:
-            result = ta.trend.IchimokuIndicator(high=self.candle_data["high"], low=self.candle_data["low"], fillna=True)
+            result = ta.trend.IchimokuIndicator(
+                high=self.candle_data["high"], low=self.candle_data["low"], fillna=True
+            )
             ichimoku_senkou_span_a = result.ichimoku_a().tolist()
             ichimoku_senkou_span_b = result.ichimoku_b().tolist()
             ichimoku_kijun_sen = result.ichimoku_base_line().tolist()
@@ -116,10 +158,12 @@ class Sequence:
                 ichimoku_senkou_span_a,
                 ichimoku_senkou_span_b,
                 ichimoku_kijun_sen,
-                ichimoku_tenkan_sen
+                ichimoku_tenkan_sen,
             )
         except:
-            raise IndicatorException(f"""ichimoku. Candle data: {self.candle_data.to_dict()}""")
+            raise IndicatorException(
+                f"""ichimoku. Candle data: {self.candle_data.to_dict()}"""
+            )
 
     def inverse_fisher_transform(self, indicator, period=14, normalized=False):
         """
@@ -131,16 +175,16 @@ class Sequence:
         try:
             calculate_indicator = getattr(self, indicator)
             ind = np.array(calculate_indicator(period))
-            x=0.1*(ind-50)
-            
-            #Inverse transform of RSI. Between -1 and 1
-            y=(np.exp(2*x)-1)/(np.exp(2*x)+1)
+            x = 0.1 * (ind - 50)
+
+            # Inverse transform of RSI. Between -1 and 1
+            y = (np.exp(2 * x) - 1) / (np.exp(2 * x) + 1)
 
             if normalized == False:
                 return y.tolist()
 
-            #Normalized version is between 0 and 100
-            y_norm =  50*(y+1)
+            # Normalized version is between 0 and 100
+            y_norm = 50 * (y + 1)
 
             return y_norm.tolist()
         except:
