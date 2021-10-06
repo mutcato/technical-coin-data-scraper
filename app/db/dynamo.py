@@ -110,7 +110,11 @@ TTL = {
 class Metrics:
     def __init__(self, table_name: str = settings.DYNAMO_TABLE):
         resource = boto3.resource(
-            "dynamodb", config=Config(read_timeout=585, connect_timeout=585)
+            "dynamodb",
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID, 
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY, 
+            region_name=settings.AWS_REGION_NAME,
+            config=Config(read_timeout=585, connect_timeout=585),
         )
         self.table_name = table_name
         self.table = resource.Table(self.table_name)
