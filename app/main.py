@@ -35,8 +35,9 @@ def kline_callback(response, coin: str, currency: str, exchange: str):
 
     ticker = Ticker(response, coin, currency, exchange)
     batch.add(ticker)
-    if batch.length > 20:
+    if batch.length >= 20:
         batch.insert_dynamo()
+        batch.insert_sqlite()
         batch.empty()
 
 

@@ -3,7 +3,7 @@ from decimal import Decimal
 from time import time
 from typing import Dict, List
 import settings
-from db import dynamo
+from db import dynamo, sqlite
 
 
 logger = settings.logging.getLogger()
@@ -53,11 +53,6 @@ class Ticker:
         self.exchange = exchange
         self.response = kline_response
         self.measures = {}
-
-    def __str__(self):
-        return self.coin + "_" + self.currency
-
-    def build_record(self):
         self.measures["open"] = self.response["k"]["o"]
         self.measures["high"] = self.response["k"]["h"]
         self.measures["low"] = self.response["k"]["l"]
@@ -65,8 +60,10 @@ class Ticker:
         self.measures["volume"] = self.response["k"]["v"]
         self.measures["number_of_trades"] = self.response["k"]["n"]
 
+    def __str__(self):
+        return self.coin + "_" + self.currency
+
     def convert_to_dynamo_item(self) -> dict:
-        self.build_record()
         item = {
             "ticker_interval": f"{self.coin}_{self.currency}_{self.interval}",
             "time": datetime.utcfromtimestamp(self.time).strftime("%Y-%m-%d %H:%M:%S"),
@@ -98,3 +95,7 @@ class Batch:
     def insert_dynamo(self):
         metrics = dynamo.Metrics()
         metrics.batch_insert(self.objects)
+
+    def insert_sqlite(self):
+        table = sqlite.Table()
+        table.batch_insert(self.objects)

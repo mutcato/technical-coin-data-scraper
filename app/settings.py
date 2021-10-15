@@ -26,6 +26,8 @@ DYNAMO_TABLE = "metrics"
 DYNAMO_TABLE_TEST = "metrics_test"
 DYNAMO_SUMMARY_TABLE = "metrics_summary"
 
+SQLITE_DATABASE = "../coinmove.db"
+SQLITE_TABLE = "technical_data"
+
 INTERVALS = ["5m", "1h", "4h"]
 
-OHLCV_QUEUE = "ticker-ohlcv"
