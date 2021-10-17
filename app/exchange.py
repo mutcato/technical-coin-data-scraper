@@ -30,9 +30,10 @@ class Binance:
 
         result = requests.get("https://api.binance.com/api/v3/exchangeInfo")
         coins = result.json()["symbols"]
-        filtered_coins = coins
+        filtered_coins = [coin for coin in coins if coin["status"] == "TRADING"]
+
         if currency:
-            filtered_coins = [coin for coin in coins if coin["quoteAsset"] == currency]
+            filtered_coins = [coin for coin in filtered_coins if coin["quoteAsset"] == currency]
 
         if not margin:
             tickers = [
