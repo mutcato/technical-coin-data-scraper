@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from math import ceil
 from time import time
 from typing import Dict, List
 import settings
@@ -79,8 +80,14 @@ class Ticker:
 
 
 class Batch:
-    def __init__(self):
+    def __init__(self, number_of_tickers, batch_size_limit:int = 20):
         self.objects: List(Ticker) = []
+        self.limit = batch_size_limit
+        self.index = 1 # To fullfill batch.index == last_ticker_index condition has to be 1 not 0  !!!
+        self.last_ticker_index = number_of_tickers
+
+    def __list__(self):
+        return self.objects
 
     @property
     def length(self):
@@ -91,6 +98,9 @@ class Batch:
 
     def empty(self):
         del self.objects[:]
+
+    def reset_index(self):
+        self.index = 1
 
     def insert_dynamo(self):
         metrics = dynamo.Metrics()

@@ -34,20 +34,33 @@ def kline_callback(response, coin: str, currency: str, exchange: str):
         return None
 
     ticker = Ticker(response, coin, currency, exchange)
-    batch.add(ticker)
-    if batch.length >= 20:
-        batch.insert_dynamo()
-        batch.insert_sqlite()
-        batch.empty()
+    interval = response["k"]["i"]
+    batch[interval].add(ticker)
+
+    if batch[interval].length >= batch[interval].limit:
+        batch[interval].insert_dynamo()
+        batch[interval].insert_sqlite()
+        batch[interval].empty()
+
+    batch[interval].index = batch[interval].index + 1 
+
+    if batch[interval].index >= batch[interval].last_ticker_index:
+        batch[interval].reset_index()
+        batch[interval].empty()
 
 
-batch = Batch()
 binance_result = binance.get_all_tickers(margin=False, currency="USDT")
 binance_tickers = binance_result["tickers"]
+binance_tickers_count = len(binance_tickers)
+
+batch = {}
+for interval in settings.INTERVALS:
+    batch[interval] = Batch(number_of_tickers = binance_tickers_count, batch_size_limit=20)
+
 exchange = binance_result["exchange"]
 bsm_result = {}
 
-print(f"length: {len(binance_tickers)}")
+print(f"binance_tickers_count: {binance_tickers_count}")
 print(binance_tickers)
 for interval in settings.INTERVALS:
     for ticker in binance_tickers:
