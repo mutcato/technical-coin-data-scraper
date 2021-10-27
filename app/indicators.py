@@ -118,7 +118,7 @@ class Sequence:
                 f"""atr. Candle data: {self.candle_data.to_dict()}"""
             )
 
-    def kama(self, period=14):
+    def kama(self, period=20):
         """
         Kaufman's Adaptive moving Average
         """
