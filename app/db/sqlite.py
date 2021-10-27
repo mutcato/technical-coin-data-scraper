@@ -39,6 +39,7 @@ class Table:
         try:
             cursor.executemany(query, values)
             connection.commit()
+            logger.info(f"BATCH INSERTED INTO SQLITE: {tickers}")
         except Exception as e:
             logger.error(f"Error on sqlite insertion: {e}")
         
