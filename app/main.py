@@ -10,6 +10,7 @@ from binance.websockets import BinanceSocketManager
 import settings
 from exchange import Binance
 from ticker import Batch, Ticker
+from prepare.indicators import serialize_tickers
 
 # binance test api account: https://testnet.binance.vision/
 api_key = settings.BINANCE_KEY
@@ -45,6 +46,9 @@ def kline_callback(response, coin: str, currency: str, exchange: str):
     batch[interval].index = batch[interval].index + 1 
 
     if batch[interval].index >= batch[interval].last_ticker_index:
+        batch[interval].insert_dynamo()
+        batch[interval].insert_sqlite()
+        print(serialize_tickers(binance_tickers))
         batch[interval].reset_index()
         batch[interval].empty()
 
