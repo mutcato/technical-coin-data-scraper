@@ -3,6 +3,7 @@
 
 from functools import partial
 import requests
+import time
 
 from binance.client import Client
 from binance.websockets import BinanceSocketManager
@@ -42,13 +43,13 @@ def kline_callback(response, coin: str, currency: str, exchange: str):
         batch[interval].insert_dynamo()
         batch[interval].insert_sqlite()
         batch[interval].empty()
+        time.sleep(3)
 
     batch[interval].index = batch[interval].index + 1 
 
     if batch[interval].index >= batch[interval].last_ticker_index:
         batch[interval].insert_dynamo()
         batch[interval].insert_sqlite()
-        print(serialize_tickers(binance_tickers))
         batch[interval].reset_index()
         batch[interval].empty()
 
@@ -59,7 +60,7 @@ binance_tickers_count = len(binance_tickers)
 
 batch = {}
 for interval in settings.INTERVALS:
-    batch[interval] = Batch(number_of_tickers = binance_tickers_count, batch_size_limit=20)
+    batch[interval] = Batch(number_of_tickers = binance_tickers_count, batch_size_limit=10)
 
 exchange = binance_result["exchange"]
 bsm_result = {}
