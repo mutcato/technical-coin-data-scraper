@@ -40,16 +40,18 @@ def kline_callback(response, coin: str, currency: str, exchange: str):
     batch[interval].add(ticker)
 
     if batch[interval].length >= batch[interval].limit:
-        batch[interval].insert_dynamo()
+        # batch[interval].insert_dynamo()
         batch[interval].insert_sqlite()
+        batch[interval].insert_timestream()
         batch[interval].empty()
-        time.sleep(3)
+        # time.sleep(3)
 
     batch[interval].index = batch[interval].index + 1 
 
     if batch[interval].index >= batch[interval].last_ticker_index:
-        batch[interval].insert_dynamo()
+        # batch[interval].insert_dynamo()
         batch[interval].insert_sqlite()
+        batch[interval].insert_timestream()
         batch[interval].reset_index()
         batch[interval].empty()
 

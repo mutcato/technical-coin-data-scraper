@@ -4,7 +4,7 @@ from math import ceil
 from time import time
 from typing import Dict, List
 import settings
-from db import dynamo, sqlite
+from db import dynamo, sqlite, timestream
 
 
 logger = settings.logging.getLogger()
@@ -108,4 +108,8 @@ class Batch:
 
     def insert_sqlite(self):
         table = sqlite.Table()
+        table.batch_insert(self.objects)
+
+    def insert_timestream(self):
+        table = timestream.Stream()
         table.batch_insert(self.objects)
