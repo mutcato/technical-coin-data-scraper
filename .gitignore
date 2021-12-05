@@ -5,3 +5,4 @@ venv
 logs
 closes.txt
 *.db
+*.swp
