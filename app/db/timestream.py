@@ -14,8 +14,8 @@ class Stream:
     insertion_limit = 100 # you can insert this many records at once
 
     def __init__(self):
-        self.database = settings.TIMESTREAM_DATABASE_TEST
-        self.table = settings.TIMESTREAM_TABLE_TEST
+        self.database = settings.TIMESTREAM_DATABASE
+        self.table = settings.TIMESTREAM_TABLE
     
 
     def build_records(self, ticker):
